@@ -1,2 +1,5 @@
 # Muse-MERN
-Muse allows people to share their creative thoughts, emotions and opinions through creative writing and poetry.
+
+This is a poetry website allowing individuals to share their creative talents through poetry.
+
+Contact me on twitter at `arnold0duor`
