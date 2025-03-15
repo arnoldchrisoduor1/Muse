@@ -188,8 +188,6 @@ def password_change(request):
         )
         
         
-        
-        
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def current_user(request):
