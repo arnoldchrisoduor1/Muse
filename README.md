@@ -1,5 +1,3 @@
-# Muse-MERN
+# Muse
 
-This is a poetry website allowing individuals to share their creative talents through poetry.
-
-Contact me on twitter at `arnold0duor`
+A platform for creatives to share short stories and incredible poetry.
