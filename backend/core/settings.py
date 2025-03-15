@@ -16,42 +16,47 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'simple',
         },
         'file': {
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/django.log',  # Make sure this directory exists
-            'maxBytes': 1024*1024*5,  # 5 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'auth_file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs/auth.log',  # Make sure this directory exists
-            'maxBytes': 1024*1024*5,  # 5 MB
-            'backupCount': 5,
+            'filename': 'logs/user_auth.log',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 10,
             'formatter': 'verbose',
         },
     },
     'loggers': {
-        'django': {
+        '': {  # Root logger
             'handlers': ['console', 'file'],
             'level': 'INFO',
         },
-        'users': {  # Change this to your app name
-            'handlers': ['console', 'auth_file'],
-            'level': 'DEBUG',
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'myapp': {  # Replace with your app name
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
             'propagate': False,
         },
     },
@@ -62,10 +67,6 @@ import os
 os.makedirs('logs', exist_ok=True)
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-h%5(^(@i834=pi9y=662&($zh(x!827zypxan&qal_)hz$l^ot'
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -102,8 +103,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # Comment this line out temporarily for testing
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -218,3 +218,4 @@ SIMPLE_JWT = {
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS=True
+CORS_ALLOW_CREDENTIALS = True

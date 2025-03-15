@@ -1,8 +1,8 @@
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
-from .views import token_obtain_pair, token_refresh
+from . import views
 
 urlpatterns = [
-    path('token/', csrf_exempt(token_obtain_pair), name='token_obtain_pair'),
-    path('token/refresh/', csrf_exempt(token_refresh), name='token_refresh'),
+    path('token/', views.token_obtain_pair, name='token_obtain_pair'),
+    path('token/refresh/', views.token_refresh, name='token_refresh'),
 ]
