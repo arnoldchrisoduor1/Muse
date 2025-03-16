@@ -93,7 +93,7 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'api',
-    # 'products',  # Example app
+    'poetry'
 ]
 
 # In settings.py
