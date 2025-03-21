@@ -30,7 +30,7 @@ const PasswordCriteria: React.FC<PasswordCriteriaProps> = ({ password }) => {
                 <div key={item.label} className="flex items-center text-xs">
                     {
                         item.met ? (
-                            <Check className='size-4 text-customBlue mr-2' />
+                            <Check className='size-4 text-link mr-2' />
                         ) : (
                             <X className="size-4 text-black-70 mr-2" />
                         )}
@@ -60,7 +60,7 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({ password 
         if (strengthLevel === 1) return "bg-red-400";
         if (strengthLevel === 2) return "bg-yellow-500";
         if (strengthLevel === 3) return "bg-yellow-400";
-        return "bg-customBlue";
+        return "bg-link";
     }
 
     const getStrengthText = (strengthLevel: number): string => {

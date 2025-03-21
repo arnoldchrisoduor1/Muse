@@ -1,81 +1,140 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, PersistOptions } from "zustand/middleware";
 import axios from 'axios';
 
-const initialPoetryState = {
-    id: null,
-    user: null,
-    username: '',
-    title: '',
-    contant: '',
-    slug: '',
-    description: '',
-    image_url: '',
-    created_at: '',
-    updated_at: '',
-    likes_count: 0,
-    comments_count: 0
+interface Poem {
+  id: string;
+  user: number;
+  username: string;
+  title: string;
+  content: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  created_at: string;
+  updated_at: string;
+  likes_count: number;
+  comments_count: number;
+  thoughts?: string;
 }
+
+interface PoemsResponse {
+  count: number;
+  results: Poem[];
+}
+
+interface PoetryState {
+  poems: Poem[];
+  currentPoem: Poem | null;
+  isLoading: boolean;
+  error: string | null;
+  createPoem: (poetryData: {
+    title: string;
+    description: string;
+    content: string;
+    thoughts: string;
+  }) => Promise<Poem>;
+  getPoems: () => Promise<Poem[]>;
+  setCurrentPoem: (poem: Poem | null) => void;
+}
+
+const initialPoetryState = {
+  poems: [],
+  currentPoem: null,
+  isLoading: false,
+  error: null
+};
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
-// Creating an axios instance.
+// Creating an axios instance
 const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-})
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+});
 
-// Adding a request interceptor to include the authentication token.
+// Adding a request interceptor to include the authentication token
 api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('accessToken');
-        if(token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-//TODO: Create types for function Inputs
+// Define persist configuration
+type PoetryPersistConfig = PersistOptions<PoetryState, PoetryState>;
 
-// Now creating a Poetry store with persistence.
-const usePoetryStore = create(
-    persist(
-        (set, get) => ({
-            ...initialPoetryState,
-            createPoem: async (poetryData) => {
-                console.log("creating poetry with:", poetryData);
-                const { title, description, content, thoughts } = poetryData;
-                //TODO: Verify details befor sending.
-                try {
-                    const response = await api.post('/api/poems/', {
-                        title,
-                        description,
-                        content,
-                        thoughts
-                    });
-                    console.log("Poem created: ", response.data);
-                    return response.data;
-                } catch (error: any) {
-                    console.error('Poetry creation error:', error.response?.data || error.message);
-                    throw error.response?.data || error;
-                }
-            }
+const persistConfig: PoetryPersistConfig = {
+  name: 'poetry-storage',
+  getStorage: () => localStorage,
+};
 
-        }),
-        {
-            // This is the name for the local storage key.
-            name: 'poetry-storage',
-            // using localstorage for persistence
-            getStorage: () => localStorage,
+// Creating a Poetry store with persistence, fixing the type issues
+const usePoetryStore = create<PoetryState>()(
+  persist(
+    (set, get) => ({
+      ...initialPoetryState,
+      
+      createPoem: async (poetryData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { title, description, content, thoughts } = poetryData;
+          const response = await api.post('/api/poems/', {
+            title,
+            description,
+            content,
+            thoughts
+          });
+          
+          // Update the poems list with the new poem
+          const poems = [...get().poems, response.data];
+          set({ poems, isLoading: false });
+          
+          return response.data;
+        } catch (error: any) {
+          set({ 
+            isLoading: false, 
+            error: error.response?.data?.message || error.message 
+          });
+          throw error.response?.data || error;
         }
-    )
-)
+      },
+      
+      getPoems: async () => {
+        console.log("getting poems");
+        set({ isLoading: true, error: null });
+        try {
+          const response = await api.get<PoemsResponse>('/api/poems/');
+          set({ 
+            poems: response.data.results, 
+            isLoading: false 
+          });
+          console.log(response.data.results)
+          return response.data.results;
+        } catch (error: any) {
+          set({ 
+            isLoading: false, 
+            error: error.response?.data?.message || error.message 
+          });
+          throw error.response?.data || error;
+        }
+      },
+      
+      setCurrentPoem: (poem) => {
+        set({ currentPoem: poem });
+      }
+    }),
+    persistConfig
+  )
+);
 
 export default usePoetryStore;

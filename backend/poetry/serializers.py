@@ -43,7 +43,7 @@ class PoemListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Poem
         fields = [
-            'id', 'user', 'username', 'title','content', 'slug', 'description',
+            'id', 'user', 'username', 'title','content', 'slug', 'description', 'thoughts',
             'image_url', 'created_at', 'updated_at', 'likes_count',
             'comments_count'
         ]
