@@ -14,6 +14,7 @@ interface Poem {
   created_at: string;
   updated_at: string;
   likes_count: number;
+  is_liked: boolean;
   comments_count: number;
   thoughts?: string;
 }
@@ -47,7 +48,7 @@ const initialPoetryState = {
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
-// Creating an axios instance
+// Creating an axios instance without the default auth headers
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -56,12 +57,26 @@ const api = axios.create({
   }
 });
 
-// Adding a request interceptor to include the authentication token
+// Define specific methods that require authentication
+const requiresAuth = (method: string, url: string): boolean => {
+  // For this API, GET requests to /api/poems/ don't need auth, but POST requests do
+  if (url.includes('/api/poems/') && method.toUpperCase() === 'GET') {
+    return false;
+  }
+  // All other endpoints require auth by default 
+  // (you can expand this logic for other endpoints as needed)
+  return true;
+};
+
+// Modified interceptor that only adds auth for endpoints that need it
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only add the token for endpoints that require authentication
+    if (requiresAuth(config.method || '', config.url || '')) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -78,7 +93,7 @@ const persistConfig: PoetryPersistConfig = {
   getStorage: () => localStorage,
 };
 
-// Creating a Poetry store with persistence, fixing the type issues
+// Creating a Poetry store with persistence
 const usePoetryStore = create<PoetryState>()(
   persist(
     (set, get) => ({
@@ -110,15 +125,27 @@ const usePoetryStore = create<PoetryState>()(
       },
       
       getPoems: async () => {
-        console.log("getting poems");
         set({ isLoading: true, error: null });
         try {
-          const response = await api.get<PoemsResponse>('/api/poems/');
+          // Create request config
+          const config: any = {
+            url: '/api/poems/',
+            method: 'GET'
+          };
+          
+          // Optionally add auth token if available
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            config.headers = {
+              Authorization: `Bearer ${token}`
+            };
+          }
+          
+          const response = await api.request<PoemsResponse>(config);
           set({ 
             poems: response.data.results, 
             isLoading: false 
           });
-          console.log(response.data.results)
           return response.data.results;
         } catch (error: any) {
           set({ 
@@ -126,6 +153,26 @@ const usePoetryStore = create<PoetryState>()(
             error: error.response?.data?.message || error.message 
           });
           throw error.response?.data || error;
+        }
+      },
+
+      likePoem: async (slug: string) => {
+        try {
+          const response = await api.post(`/api/poems/${slug}/like/`);
+          return response.data; // This should have the status: "liked" or "unliked"
+        } catch (error) {
+          console.error("Error liking poem:", error);
+          throw error;
+        }
+      },
+
+      getPoemCommentsandReplies: async (slug: string) => {
+        try{
+            const response = await api.get(`/api/poems/${slug}/comments/`);
+            return response.data;
+        } catch(error: any) {
+            console.error("Error getting the comments: ", error);
+            throw error;
         }
       },
       

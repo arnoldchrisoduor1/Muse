@@ -158,8 +158,8 @@ def poem_comments(request, slug):
     
     # Annotate with like counts
     top_comments = top_comments.annotate(
-        like_count=Count('likes', distinct=True),
-        reply_count=Count('replies', distinct=True)
+        likes_count=Count('likes', distinct=True),
+        replies_count=Count('replies', distinct=True)
     )
     
     serializer = RecursiveCommentSerializer(top_comments, many=True, context={'request': request})

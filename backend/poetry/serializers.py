@@ -39,15 +39,25 @@ class PoemListSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
     comments_count = serializers.IntegerField(read_only=True)
+    is_liked = serializers.SerializerMethodField()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Like.objects.filter(
+                user=request.user,
+                poem=obj,
+                content_type='poem'
+            ).exists()
+        return False
     
     class Meta:
         model = Poem
         fields = [
-            'id', 'user', 'username', 'title','content', 'slug', 'description', 'thoughts',
-            'image_url', 'created_at', 'updated_at', 'likes_count',
-            'comments_count'
+            'id', 'user', 'username', 'title', 'content', 'slug', 'description', 'thoughts',
+            'image_url', 'created_at', 'updated_at', 'likes_count', 'comments_count', 'is_liked'
         ]
-        read_only_fields = ['id', 'user', 'slug', 'created_at', 'updated_at', 'likes_count', 'comments_count']
+        read_only_fields = ['id', 'user', 'slug', 'created_at', 'updated_at', 'likes_count', 'comments_count', 'is_liked']
 
 class PoemDetailSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

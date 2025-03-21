@@ -48,7 +48,7 @@ const Navigation = () => {
         <div className="flex flex-col gap-3">
         { showMenu &&
           navItems.map((item) => (
-            <Link id={item.id} href={item.href} className="">
+            <Link key={item.id} href={item.href} className="">
               <motion.div className="flex justify-self-center bg-primary w-fit py-1 px-4 border rounded-sm"
               initial={{ opacity: 0,  y:-20}}
               animate={{ opacity: 1, y: 0 }}
