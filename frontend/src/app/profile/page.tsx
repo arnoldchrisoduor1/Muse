@@ -13,19 +13,14 @@ import { formatDistanceToNow } from "date-fns";
 import { formatTimeDifference } from "@/utils/FormatTimeDifference";
 
 const Page = () => {
-  const {
-    user,
-    updateProfile,
-    uploadAvatar,
-    isLoading,
-    logout
-  } = useUserStore();
+  const { user, updateProfile, uploadAvatar, isLoading, logout } =
+    useUserStore();
 
   const { poems, error, getPoems, deletePoem } = usePoetryStore();
 
   const [poemsLoading, setPoemsLoading] = useState(true);
   const [deletingPoemId, setDeletingPoemId] = useState(null);
-  
+
   const fileInputRef = useRef(null);
 
   const router = useRouter();
@@ -162,7 +157,6 @@ const Page = () => {
   };
 
   // Format date for poem display
-  
 
   useEffect(() => {
     if (!user.isAuthenticated) {
@@ -256,7 +250,7 @@ const Page = () => {
                   width={120}
                   height={120}
                   alt="Profile picture"
-                  className="rounded-full border-4 border-indigo-100 shadow-md object-cover w-[120px] h-[120px]"
+                  className="rounded-full border-4 border-primary shadow-md object-cover w-[120px] h-[120px]"
                 />
                 <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                   <span className="text-white text-sm font-medium">
@@ -277,7 +271,9 @@ const Page = () => {
               <div className="w-full max-w-md bg-white rounded-xl shadow-sm p-6 mb-8">
                 {/* Username */}
                 <div className="text-center mb-3">
-                  <p className="text-indigo-600 font-medium">@{user.username}</p>
+                  <p className="text-link font-medium">
+                    @{user.username}
+                  </p>
                 </div>
 
                 {/* Name */}
@@ -327,62 +323,66 @@ const Page = () => {
 
           {/* Posts Section with Loading State */}
           <div className="w-full max-w-md">
-  <h2 className="text-xl font-bold mb-4 border-b pb-2">My Posts</h2>
-  {poemsLoading ? (
-    <PoemsSkeleton />
-  ) : (
-    <div className="flex flex-col gap-4">
-      {poems && poems.length > 0 ? (
-        poems
-          .filter((poem) => poem.user === user.id) // Filter poems by user ID
-          .map((poem) => (
-            <div
-              key={poem.id}
-              className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative"
-            >
-              <div className="flex justify-between items-start">
-                <h3 className="font-semibold text-lg mb-2">{poem.title}</h3>
-                <span className="text-xs text-gray-500 flex items-center gap-1">
-                  <Calendar size={12} />
-                  {formatTimeDifference(poem.updated_at)}
-                </span>
-              </div>
-              <p className="text-gray-600 text-sm">{poem.description}</p>
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">
-                    Poetry
-                  </span>
-                  <span className="text-xs text-gray-500 flex items-center gap-1">
-                    <ThumbsUp size={12} /> {poem.likes_count || 0}
-                  </span>
-                </div>
+            <h2 className="text-xl font-bold mb-4 border-b pb-2">My Posts</h2>
+            {poemsLoading ? (
+              <PoemsSkeleton />
+            ) : (
+              <div className="flex flex-col gap-4">
+                {poems && poems.length > 0 ? (
+                  poems
+                    .filter((poem) => poem.user === user.id) // Filter poems by user ID
+                    .map((poem) => (
+                      <div
+                        key={poem.id}
+                        className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow relative"
+                      >
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-lg mb-2">
+                            {poem.title}
+                          </h3>
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Calendar size={12} />
+                            {formatTimeDifference(poem.updated_at)}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 text-sm">
+                          {poem.description}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs bg-primary/50 text-link px-2 py-1 rounded-full">
+                              Poetry
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <ThumbsUp size={12} /> {poem.likes_count || 0}
+                            </span>
+                          </div>
 
-                {/* Delete Button - Only visible if user is the author */}
-                {user.id === poem.user && (
-                  <button
-                    onClick={() => handleDeletePoem(poem)}
-                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
-                    disabled={deletingPoemId === poem.id}
-                  >
-                    {deletingPoemId === poem.id ? (
-                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <Trash2 size={16} />
-                    )}
-                  </button>
+                          {/* Delete Button - Only visible if user is the author */}
+                          {user.id === poem.user && (
+                            <button
+                              onClick={() => handleDeletePoem(poem)}
+                              className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                              disabled={deletingPoemId === poem.id}
+                            >
+                              {deletingPoemId === poem.id ? (
+                                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Trash2 size={16} />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>You haven't written any poems yet.</p>
+                  </div>
                 )}
               </div>
-            </div>
-          ))
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          <p>You haven't written any poems yet.</p>
-        </div>
-      )}
-    </div>
-  )}
-</div>
+            )}
+          </div>
 
           <div className="mt-5" onClick={handleLogout}>
             <Button title="Log Out" />
@@ -518,7 +518,8 @@ const Page = () => {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-sm">
             <h3 className="text-lg font-bold mb-3">Delete Poem</h3>
             <p className="text-gray-600 mb-4">
-              Are you sure you want to delete "{poemToDelete?.title}"? This action cannot be undone.
+              Are you sure you want to delete "{poemToDelete?.title}"? This
+              action cannot be undone.
             </p>
 
             <div className="flex justify-end gap-3">
