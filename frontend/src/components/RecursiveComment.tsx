@@ -6,6 +6,7 @@ import InputComponent from "@/components/InputComponent";
 import { twMerge } from "tailwind-merge";
 import usePoetryStore from "@/store/poetryStore";
 import { useUserStore } from '@/store/userStore';
+import { formatTimeDifference } from '@/utils/FormatTimeDifference';
 
 // Comment skeleton for loading states
 const CommentSkeleton = ({ depth = 0 }) => {
@@ -34,10 +35,13 @@ const Comment = ({
   likes_num, 
   comment_num,
   user_id,
-  onUpdate
+  onUpdate,
+  date
 }) => {
   const { likeComment, commentOnPoem, deleteComment } = usePoetryStore();
   const { getSingleUser } = useUserStore();
+
+  const timeDifference = formatTimeDifference(date);
   
   const [isLoading, setIsLoading] = useState(false);
   const [comment, setComment] = useState("");
@@ -153,8 +157,10 @@ const Comment = ({
           <div className="flex items-start justify-between">
             <div>
               <p className="font-medium text-sm">@{username}</p>
+              <p className='text-xs'>{timeDifference} ago</p>
               <p className="text-sm text-gray-600 my-1">{content}</p>
             </div>
+
             
             <div className="flex items-center gap-3">
               <button
@@ -234,6 +240,8 @@ const RecursiveComment = ({
   if (isLoading) {
     return <CommentSkeleton depth={depth} />;
   }
+
+  // console.log(comment);
   
   return (
     <div style={{ marginLeft }}>
@@ -247,6 +255,7 @@ const RecursiveComment = ({
         comment_num={comment.replies_count}
         isLiked={comment.is_liked}
         onUpdate={onUpdate}
+        date={comment.updated_at}
       />
   
       {/* Render replies if they exist */}

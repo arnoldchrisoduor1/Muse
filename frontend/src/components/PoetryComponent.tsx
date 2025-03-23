@@ -8,6 +8,7 @@ import usePoetryStore from "@/store/poetryStore";
 import { twMerge } from "tailwind-merge";
 import RecursiveComment from "./RecursiveComment";
 import { useUserStore } from "@/store/userStore";
+import { formatTimeDifference } from "@/utils/FormatTimeDifference";
 
 const CommentSkeleton = () => (
   <div className="animate-pulse mt-4">
@@ -31,6 +32,7 @@ const PoetryComponent = ({
   comment_num,
   title,
   user_id,
+  date,
   isLiked = false,
 }) => {
   const [liked, setLiked] = useState(isLiked);
@@ -43,20 +45,39 @@ const PoetryComponent = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comment, setComment] = useState("");
   const [updateCounter, setUpdateCounter] = useState(0);
-  const [user, setUser] = useState(null);
+  const [author, setAuthor] = useState(null);
 
-  const { likePoem, getPoemCommentsandReplies, commentOnPoem } = usePoetryStore();
-  const { getSingleUser } = useUserStore();
+  const { likePoem, getPoemCommentsandReplies, commentOnPoem, deletePoem } = usePoetryStore();
+  const { getSingleUser, user } = useUserStore();
+
+  const timeDifference = formatTimeDifference(date);
 
   const getUser = async() => {
     try {
       setIsUserLoading(true);
       const response = await getSingleUser(user_id);
-      setUser(response);
+      setAuthor(response);
     } catch (error) {
       console.error("Error fetching user:", error);
     } finally {
       setIsUserLoading(false);
+    }
+  }
+
+  const handleDeletePoem = async(slug) => {
+    try {
+      setIsLoading(true);
+      // checking if logged in user is the author
+      if(user_id === user.id){
+        const response = await deletePoem(slug);
+        console.log(response);
+      } else {
+        console.log("You are not the Author of this work");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -135,10 +156,10 @@ const PoetryComponent = ({
 
   // Function to get the avatar source
   const getAvatarSrc = () => {
-    if (!user || !user.profile || !user.profile.avatar_url) {
+    if (!author || !author.profile || !author.profile.avatar_url) {
       return Profile; // Default profile image
     }
-    return user.profile.avatar_url;
+    return author.profile.avatar_url;
   };
 
   return (
@@ -164,11 +185,11 @@ const PoetryComponent = ({
               )}
             </div>
             <div>
-              <p className="font-medium">@{isUserLoading ? "Loading..." : (user?.username || username)}</p>
+              <p className="font-medium">@{isUserLoading ? "Loading..." : (author?.username || username)}</p>
               <p className="text-sm text-gray-500">Poem</p>
             </div>
           </div>
-          <div className="text-gray-500 text-end text-sm">5 Mins Ago</div>
+          <div className="text-gray-500 text-end text-sm">{timeDifference} ago</div>
         </div>
 
         {/* Middle part */}

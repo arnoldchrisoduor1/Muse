@@ -18,7 +18,7 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const { signup } = useUserStore();
+  const { signup, user } = useUserStore();
 
   const handleChange = (e) => {
     const { name, value } = e.target;

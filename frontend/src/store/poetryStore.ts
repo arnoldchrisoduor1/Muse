@@ -166,6 +166,18 @@ const usePoetryStore = create<PoetryState>()(
         }
       },
 
+      deletePoem: async(slug: string) => {
+        console.log("deleting - poem");
+        try {
+            const response = await api.delete(`/api/poems/${slug}/`);
+            console.log(response.data);
+            return response.data;
+        } catch(error) {
+            console.error("Error deleting poem");
+            throw error;
+        }
+      },
+
       getPoemCommentsandReplies: async (slug: string) => {
         try {
           const response = await api.get(`/api/poems/${slug}/comments/`);

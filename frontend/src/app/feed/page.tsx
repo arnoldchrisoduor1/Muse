@@ -98,7 +98,8 @@ const Page = () => {
               comment_num={poem.comments_count} 
               slug={poem.slug} 
               isLiked={poem.is_liked} 
-              title={poem.title} 
+              title={poem.title}
+              date={poem.updated_at}
             />
           ))}
         </div>

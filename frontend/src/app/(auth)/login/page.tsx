@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User, Lock } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,7 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useUserStore();
+  const { login, user } = useUserStore();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -73,6 +73,12 @@ const SignUp = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+      if(user.isAuthenticated) {
+        router.push('/feed');
+      }
+    }, [user.isAuthenticated, router]);
 
   return (
     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%]">

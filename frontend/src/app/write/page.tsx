@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PoetryEditor from "../../components/PoetryEditor";
 import InputComponent from "@/components/InputComponent";
 import TextAreaComponent from "@/components/TextAreaComponent";
@@ -12,12 +12,9 @@ import { useUserStore } from "@/store/userStore";
 const PoetryForm = () => {
 
     const createPoem = usePoetryStore((state) => state.createPoem);
-    const { isAuthenticated } = useUserStore();
+    const { user } = useUserStore();
     const router = useRouter();
 
-    // if(!isAuthenticated) {
-    //   router.push('/login')
-    // }
 
   const [poemData, setPoemData] = useState({
     content: "",
@@ -66,6 +63,13 @@ const handleChange = (e: any) => {
     }
     // Handle submission logic here
   }
+
+  // Redirecting unauthenticated users.
+  useEffect(() => {
+    if(!user.isAuthenticated) {
+      router.push('/login');
+    }
+  }, [user.isAuthenticated, router]);
 
   return (
     <div className="max-w-2xl mx-auto p-4">

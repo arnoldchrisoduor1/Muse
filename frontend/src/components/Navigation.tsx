@@ -4,7 +4,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { ChevronsUp, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { id: "feed", title: "Feed", href: "/feed", delay: 0.1},
@@ -15,8 +15,12 @@ const navItems = [
 ];
 
 const Navigation = () => {
-
   const [showMenu, setShowMenu] = useState(false);
+
+  // Function to handle navigation item click
+  const handleNavClick = () => {
+    setShowMenu(false);
+  };
 
   return (
     <header className="w-full py-1 mt-1">
@@ -30,37 +34,40 @@ const Navigation = () => {
             <ThemeToggle />
           </div>
 
-          <div onClick={() => setShowMenu(prev => !prev)}
-          >
+          <div onClick={() => setShowMenu(prev => !prev)}>
             <motion.div
-            animate={{ rotate: showMenu ? 180 : 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+              animate={{ rotate: showMenu ? 180 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-            {
-              showMenu ? <ChevronsUp size={30} className="dark:text-black"/>:  <Menu size={30} className="dark:text-black" />
-            }
+              {
+                showMenu ? <ChevronsUp size={30} className="dark:text-black"/> : <Menu size={30} className="dark:text-black" />
+              }
             </motion.div>
           </div>
         </div>
-        
       </div>
 
       <div className="absolute right-[3%] top-[8%] z-100">
         <div className="flex flex-col gap-3">
-        { showMenu &&
-          navItems.map((item) => (
-            <Link key={item.id} href={item.href} className="">
-              <motion.div className="flex justify-self-center bg-primary w-fit py-1 px-4 border rounded-sm"
-              initial={{ opacity: 0,  y:-20}}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: item.delay }}
+          <AnimatePresence>
+            {showMenu && navItems.map((item) => (
+              <Link 
+                key={item.id} 
+                href={item.href} 
+                onClick={handleNavClick}
               >
-                {item.title}
-              </motion.div>
-            </Link>
-          ))
-        }
+                <motion.div 
+                  className="flex justify-self-center bg-primary w-fit py-1 px-4 border rounded-sm"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ delay: item.delay }}
+                >
+                  {item.title}
+                </motion.div>
+              </Link>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </header>
