@@ -80,7 +80,11 @@ SECRET_KEY = 'django-insecure-h%5(^(@i834=pi9y=662&($zh(x!827zypxan&qal_)hz$l^ot
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'muse-mu6t.onrender.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 
 # Application definition
