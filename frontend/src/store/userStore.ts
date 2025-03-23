@@ -1,28 +1,62 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, PersistOptions } from 'zustand/middleware';
 import axios from 'axios';
 
-// Define the initial user state
-const initialUserState = {
-  id: null,
-  username: '',
-  email: '',
-  first_name: '',
-  last_name: '',
-  profile: {
-    avatar: null,
-    bio: '',
-    create_at: null,
-    updated_at: null
-  },
-  is_active: false,
-  isAuthenticated: false
-};
+// Define User interfaces
+interface UserProfile {
+  avatar_url: string | null;
+  bio: string;
+  create_at: string | null;
+  updated_at: string | null;
+}
 
-// API base URL
+interface User {
+  id: number | null;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  profile: UserProfile;
+  is_active: boolean;
+  isAuthenticated: boolean;
+}
+
+// Define UserStore interface
+interface UserState {
+  user: User;
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  signup: (userData: {
+    username: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+  }) => Promise<any>;
+  
+  login: (userData: {
+    username: string;
+    password: string;
+  }) => Promise<User>;
+  
+  updateProfile: (profileData: {
+    first_name: string;
+    last_name: string;
+    bio: string;
+  }) => Promise<any>;
+  
+  uploadAvatar: (avatarFile: File) => Promise<any>;
+  updateAvatarUrl: (avatarUrl: string) => Promise<any>;
+  
+  logout: () => void;
+  
+  reset: () => void;
+}
+
+// API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -45,154 +79,236 @@ api.interceptors.request.use(
   }
 );
 
-// Create the user store with persistence
-const useUserStore = create(
+// Initial User State
+const initialUserState: Pick<UserState, 'user' | 'isLoading' | 'error'> = {
+  user: {
+    id: null,
+    username: '',
+    email: '',
+    first_name: '',
+    last_name: '',
+    profile: {
+      avatar_url: null,
+      bio: '',
+      create_at: null,
+      updated_at: null
+    },
+    is_active: false,
+    isAuthenticated: false
+  },
+  isLoading: false,
+  error: null
+};
+
+// Define persist configuration
+type UserPersistConfig = PersistOptions<UserState, UserState>;
+
+const persistConfig: UserPersistConfig = {
+  name: 'user-storage',
+  getStorage: () => localStorage,
+};
+
+// Create the Zustand Store
+const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
-      // Initial state
       ...initialUserState,
-      
+
       // Actions
       signup: async (userData) => {
-        console.log("Signing up using", userData);
+        set({ isLoading: true, error: null });
         const { username, email, password, password_confirm } = userData;
-        
-        // Validate password match
+
         if (password !== password_confirm) {
+          set({ isLoading: false, error: 'Passwords do not match' });
           throw new Error('Passwords do not match');
         }
-        
+
         try {
-          console.log('Attempting to sign up with:', { username, email });
-          
           const response = await api.post('/api/users/users/', {
             username,
             email,
             password,
             password_confirm
           });
-          
-          console.log('Signup response data:', response.data);
-        
-          console.log("User created", response.data);
 
+          set({ isLoading: false });
           return response.data;
-        } catch (error) {
-          console.error('Signup error:', error.response?.data || error.message);
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error.response?.data?.message || error.message
+          });
           throw error.response?.data || error;
         }
       },
-      
-      // Update user profile information
+
+      getSingleUser: async(user_id: number) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await api.get(`/api/users/users/public/${user_id}/`);
+          set({ isLoading: false });
+          return response.data;
+        } catch(error: any) {
+          set({ isLoading: false });
+          set({error: error.response?.data?.message || error.message});
+          throw error.reponse?.data || error;
+        }
+      },
+
       updateProfile: async (profileData) => {
+        set({ isLoading: true, error: null });
         const { first_name, last_name, bio } = profileData;
-        const currentUser = get();
         
         try {
-          const response = await api.put(`/api/users/users/${currentUser.id}/`, {
+          const response = await api.put('/api/users/users/me/profile/', {
             first_name,
             last_name,
-            profile: {
-              bio
+            bio
+          });
+
+          set({
+            isLoading: false,
+            user: {
+              ...get().user,
+              ...response.data
+            }
+          });
+
+          return response.data;
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error.response?.data?.message || error.message
+          });
+          throw error.response?.data || error;
+        }
+      },
+
+      uploadAvatar: async (avatarFile) => {
+        set({ isLoading: true, error: null });
+        console.log("avatar filetype", avatarFile.type);
+        
+        try {
+          // Step 1: Get the presigned URL for upload
+          const urlResponse = await api.get('/api/users/users/image-url/', {
+            params: { content_type: avatarFile.type || 'image/jpeg' }
+          });
+          const { uploadURL, objectURL } = urlResponse.data;
+          
+          // Step 2: Upload the file directly to S3
+          console.log("uploading image to s3: ", avatarFile);
+          const response = await axios({
+            method: 'PUT',
+            url: uploadURL,
+            headers: { 
+              'Content-Type': avatarFile.type || 'image/jpeg'
+            },
+            data: avatarFile
+          });
+
+          console.log("upload to s3 response:", response);
+          
+          // Step 3: Update the user's avatar URL in the backend
+          const updateResponse = await api.put('/api/users/users/me/avatar/', {
+            avatar_url: objectURL
+          });
+
+          console.log("update image url to user response: ", updateResponse);
+          
+          // Step 4: Update local state
+          set({
+            isLoading: false,
+            user: {
+              ...get().user,
+              ...updateResponse.data
             }
           });
           
+          console.log(objectURL);
+          return objectURL;
+        } catch (error: any) {
           set({
-            ...currentUser,
-            ...response.data
+            isLoading: false,
+            error: error.response?.data?.message || error.message
           });
-          
-          return response.data;
-        } catch (error) {
-          console.error('Profile update error:', error.response?.data || error.message);
+          console.log(error);
           throw error.response?.data || error;
         }
       },
       
-      // Update avatar
-      updateAvatar: async (avatarFile) => {
-        const currentUser = get();
+      updateAvatarUrl: async (avatarUrl) => {
+        set({ isLoading: true, error: null });
         
         try {
-          // Create form data for file upload
-          const formData = new FormData();
-          formData.append('avatar', avatarFile);
-          
-          // Need to override content-type header for multipart/form-data
-          const response = await axios.put(
-            `${API_BASE_URL}/api/users/users/${currentUser.id}/profile/`,
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-              }
-            }
-          );
+          const response = await api.put('/api/users/me/avatar/', {
+            avatar_url: avatarUrl
+          });
           
           set({
-            ...currentUser,
-            profile: {
-              ...currentUser.profile,
+            isLoading: false,
+            user: {
+              ...get().user,
               ...response.data
             }
           });
           
           return response.data;
-        } catch (error) {
-          console.error('Avatar update error:', error.response?.data || error.message);
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error.response?.data?.message || error.message
+          });
           throw error.response?.data || error;
         }
       },
-      
-      // Login user
+
       login: async (userData) => {
-        console.log("Loggin in with", userData);
+        set({ isLoading: true, error: null });
         const { username, password } = userData;
+        
         try {
           const response = await api.post('/api/auth/token/', {
             username,
             password
           });
           const { access, refresh, user } = response.data;
-          
-          // Store tokens in localStorage
+
           localStorage.setItem('accessToken', access);
           localStorage.setItem('refreshToken', refresh);
-          
+
           set({
-            ...user,
-            isAuthenticated: true
+            isLoading: false,
+            user: {
+              ...user,
+              isAuthenticated: true
+            }
           });
-          console.log("Login response:", response.data);
-          console.log("user", user);
+
           return user;
-        } catch (error) {
-          console.error('Login error:', error.response?.data || error.message);
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error.response?.data?.message || error.message
+          });
           throw error.response?.data || error;
         }
       },
-      
-      // Logout: clear user state and tokens
+
       logout: () => {
-        // Remove tokens from localStorage
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        
-        set(initialUserState);
+
+        set({ ...initialUserState });
       },
-      
-      // Reset store to initial state (useful for testing)
+
       reset: () => {
-        set(initialUserState);
+        set({ ...initialUserState });
       }
     }),
-    {
-      name: 'user-storage', // Name for localStorage key
-      getStorage: () => localStorage, // Use localStorage for persistence
-    }
+    persistConfig
   )
 );
 
-export default useUserStore;
+// Export the store and API for easy access
+export { useUserStore, api };

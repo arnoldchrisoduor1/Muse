@@ -156,6 +156,18 @@ def poem_comments(request, slug):
         parent=None
     ).select_related('user').prefetch_related('replies')
     
+    # Count all descendants for each comment
+    for comment in top_comments:
+        # Use exclude instead of ne (which doesn't exist in Django)
+        # This gets all comments with path starting with this comment's path
+        # but excludes the comment itself
+        descendants = Comment.objects.filter(
+            path__startswith=comment.path
+        ).exclude(id=comment.id).count()
+        
+        # Add the count as an attribute
+        comment.total_replies_count = descendants
+    
     # Annotate with like counts
     top_comments = top_comments.annotate(
         likes_count=Count('likes', distinct=True),

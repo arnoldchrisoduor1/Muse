@@ -7,11 +7,17 @@ import TextAreaComponent from "@/components/TextAreaComponent";
 import Button from "@/components/Button";
 import usePoetryStore from "@/store/poetryStore";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/store/userStore";
 
 const PoetryForm = () => {
 
     const createPoem = usePoetryStore((state) => state.createPoem);
+    const { isAuthenticated } = useUserStore();
     const router = useRouter();
+
+    // if(!isAuthenticated) {
+    //   router.push('/login')
+    // }
 
   const [poemData, setPoemData] = useState({
     content: "",

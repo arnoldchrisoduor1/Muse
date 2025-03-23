@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { User, Lock } from "lucide-react";
-import useUserStore from "@/store/userStore";
+import { useUserStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import InputComponent from "@/components/InputComponent";
 import Button from "@/components/Button";
@@ -15,7 +15,7 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const login = useUserStore((state) => state.login);
+  const { login } = useUserStore();
 
   const handleChange = (e) => {
     const { name, value } = e.target;

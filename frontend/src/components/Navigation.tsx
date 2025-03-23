@@ -11,6 +11,7 @@ const navItems = [
   { id: "signup", title: "Sign Up",  href: "/signup", delay: 0.2},
   { id: "login", title: "Log In", href: "/login", delay: 0.3},
   { id: "write", title: "Write", href: "/write", delay: 0.4},
+  { id: "profile", title: "Profile", href: "/profile", delay: 0.5},
 ];
 
 const Navigation = () => {

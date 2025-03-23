@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import InputComponent from "./InputComponent";
 import { Mail, User, Lock } from "lucide-react";
-import useUserStore from "@/store/userStore";
+import { useUserStore } from "@/store/userStore";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
 import Button from "./Button";
 import { useRouter } from "next/navigation";
@@ -18,7 +18,7 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const signup = useUserStore((state) => state.signup);
+  const { signup } = useUserStore();
 
   const handleChange = (e) => {
     const { name, value } = e.target;

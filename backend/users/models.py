@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,9 @@ class User(AbstractUser):
             super().save(*args, **kwargs)
             if is_new:
                 logger.info(f"User created: {self.username} (ID: {self.pk})")
+                # Create profile for new users
+                if not hasattr(self, 'profile'):
+                    Profile.objects.create(user=self)
             else:
                 logger.info(f"User updated: {self.username} (ID: {self.pk})")
         except Exception as e:
@@ -30,7 +34,7 @@ class User(AbstractUser):
 class Profile(models.Model):
     """Extends the profile information for users."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    avatar = models.ImageField(upload_to='profiles/', null=True, blank=True)
+    avatar_url = models.URLField(max_length=500, null=True, blank=True)
     bio = models.TextField(max_length=500, blank=True)
     create_at = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -40,6 +44,12 @@ class Profile(models.Model):
     
     def save(self, *args, **kwargs):
         is_new = self.pk is None
+        
+        # Generate default avatar URL for new profiles
+        if is_new and not self.avatar_url:
+            
+            self.avatar_url = f"https://robohash.org/{self.user.username}"
+            
         try:
             super().save(*args, **kwargs)
             if is_new:
@@ -49,3 +59,8 @@ class Profile(models.Model):
         except Exception as e:
             logger.error(f"Error saving profile for {self.user.username}: {str(e)}")
             raise
+        
+# from users.models import Profile
+# for profile in Profile.objects.all():
+#     profile.avatar_url = f"https://robohash.org/{profile.user.username}"
+#     profile.save()
