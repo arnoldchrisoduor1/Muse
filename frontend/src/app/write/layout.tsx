@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import { twMerge } from "tailwind-merge";
 import 'react-quill/dist/quill.snow.css';
-import QuillStyles from '../../styles/quill-styles';
 
 const inter = Inter({ subsets: ["latin"] });
 
